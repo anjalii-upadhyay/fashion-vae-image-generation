@@ -1,0 +1,21 @@
+# Data (downloaded at runtime, never committed)
+data/*
+!data/.gitkeep
+
+# Generated outputs
+outputs/*
+!outputs/.gitkeep
+
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+venv/
+.venv/
+
+# Model checkpoints
+*.pt
+*.pth
+
+# OS
+.DS_Store
