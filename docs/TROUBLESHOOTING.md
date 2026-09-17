@@ -42,4 +42,37 @@ succeeded (verified with `git ls-remote`).
 
 ---
 
+## 2026-09-17 — Fashion-MNIST re-downloaded into the wrong folder
+
+**Symptom:** Running `src/visualize_samples.py` from inside `src/` created a
+second copy of the dataset at `src/data/FashionMNIST` instead of reusing the
+one already at `data/FashionMNIST`.
+
+**Root cause:** `get_dataloaders()` used a relative default path
+(`data_dir="data"`), which resolves against the current working directory,
+not the project root — so running scripts from different folders re-downloaded
+the dataset each time.
+
+**Fix:** Changed the default in `src/data.py` to an absolute path computed
+from `Path(__file__).resolve().parent.parent / "data"`, so it always
+resolves to the project's `data/` folder regardless of the caller's cwd.
+Removed the duplicate `src/data/` folder.
+
+---
+
+## 2026-09-17 — Sample grid image had overlapping labels
+
+**Symptom:** `outputs/sample_images.png` (2 rows x 8 columns of sample
+images) had the second row's title text overlapping the bottom of the first
+row's images.
+
+**Root cause:** `fig.tight_layout()` didn't add enough vertical space
+between subplot rows for the title text at this figure size.
+
+**Fix:** Replaced `tight_layout()` with explicit
+`fig.subplots_adjust(hspace=0.5, top=0.85)` and increased figure height
+slightly (4 → 4.5). Verified visually — labels no longer overlap.
+
+---
+
 <!-- New entries go above this line. Append, don't rewrite history. -->
