@@ -72,4 +72,33 @@ Public so it's easy to link in the course submission.
 
 ---
 
+## 2026-09-17 — Baseline AE architecture: conv encoder/decoder, latent_dim=32, MSE loss
+
+**Options considered:** Fully-connected AE vs. convolutional AE; latent
+dimension (8 / 16 / 32 / 64); MSE vs. BCE reconstruction loss.
+
+**Why convolutional:** Clothing images have local spatial structure (edges,
+textures) that conv layers capture far more efficiently than flattening to a
+dense layer — fewer parameters, better reconstructions.
+
+**Why latent_dim=32:** Small enough to force real compression (28×28=784
+pixels → 32 numbers, ~24x reduction) so the latent space reflects learned
+visual characteristics rather than near-lossless copying, but large enough
+for Fashion-MNIST's 10 categories to be separable. Will revisit if the
+downstream VAE needs more capacity.
+
+**Why MSE over BCE:** Pixels are continuous grayscale intensities (not
+binary), and MSE is simpler to reason about jointly with the VAE's KL term
+later. BCE is common for Fashion-MNIST AEs too but was not chosen to keep
+the loss function consistent and interpretable across AE and VAE.
+
+**Result:** Train MSE dropped from 0.037 → 0.009 over 10 epochs (smooth,
+monotonic — see `outputs/ae_loss_curve.png`). Reconstructions
+(`outputs/ae_reconstructions.png`) preserve garment shape/silhouette
+correctly; fine texture/text details are blurred, which is expected AE
+behavior and motivates the move to a VAE next for cleaner generative
+sampling.
+
+---
+
 <!-- New entries go above this line. Append, don't rewrite history. -->
