@@ -2,9 +2,13 @@
 data/*
 !data/.gitkeep
 
-# Generated outputs
+# Generated outputs (plots are force-added selectively as they're reviewed;
+# model weights are small for Fashion-MNIST so we track them directly to
+# avoid retraining from scratch every session — revisit with Git LFS or
+# GitHub Releases once DeepFashion makes checkpoints much larger)
 outputs/*
 !outputs/.gitkeep
+!outputs/*.pt
 
 # Python
 __pycache__/
@@ -12,10 +16,6 @@ __pycache__/
 .ipynb_checkpoints/
 venv/
 .venv/
-
-# Model checkpoints
-*.pt
-*.pth
 
 # OS
 .DS_Store

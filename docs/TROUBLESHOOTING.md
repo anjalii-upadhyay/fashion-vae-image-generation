@@ -128,4 +128,30 @@ durable storage — only the pushed commits are.
 
 ---
 
+## 2026-11-20 — Every fresh session forced a full retrain from scratch
+
+**Symptom:** Each new session (fresh container, or a second clone for a
+parallel subagent) had no trained model weights available, so every
+latent-space analysis, generation, or evaluation step had to retrain the AE
+(10 epochs) and VAE (15 epochs) first — several minutes of repeated,
+avoidable work. User flagged this directly: "why didn't you save the
+weights somewhere for our reference?"
+
+**Root cause:** `.gitignore` blanket-excluded `*.pt`/`*.pth` from the
+initial scaffold (step 2), on the generic "don't commit model checkpoints"
+habit — applied without checking actual file size. The AE and VAE weights
+are under 1.5MB each; there was no real bloat concern at this scale.
+
+**Fix:** Changed `.gitignore` to explicitly track `outputs/*.pt` (removed
+the blanket checkpoint-ignore rule). Committed the already-trained
+`ae_weights.pt` and `vae_weights.pt` directly. Future sessions can
+`git pull` and load weights immediately — no retraining needed unless the
+architecture or hyperparameters change.
+
+**Flagged for later:** This won't scale to DeepFashion — larger
+images/deeper models will produce much bigger checkpoint files. Revisit
+with Git LFS or GitHub Releases at that point rather than plain git.
+
+---
+
 <!-- New entries go above this line. Append, don't rewrite history. -->
