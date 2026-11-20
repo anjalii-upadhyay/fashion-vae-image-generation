@@ -128,4 +128,32 @@ durable storage — only the pushed commits are.
 
 ---
 
+## 2026-11-20 — Retraining took much longer than the documented estimate
+
+**Symptom:** Re-running `python3 src/train_autoencoder.py` (documented as
+"~1-2 min on CPU") took roughly 15 minutes wall-clock in this session's
+fresh clone — about 8-10x the estimate. The immediately following
+`python3 src/train_vae.py` (documented as "~2-3 min") took about 3m44s,
+close to its estimate.
+
+**Root cause:** `uptime` showed a load average around 8.3 on a 4-core
+machine while the AE training was running — roughly double the available
+cores' worth of demand. This environment can be shared with other
+concurrent work (in this project's case, a parallel session was adding a
+conditional-VAE stretch goal in a separate clone of the same repo at the
+same time), and CPU-bound PyTorch training on CPU has no way to detect or
+wait out that contention — it just runs slower. This is not a code bug and
+nothing here needed fixing; the documented time estimates assume a mostly
+idle CPU.
+
+**Fix:** None needed — the training loop completes correctly regardless of
+wall-clock time. Practically, don't assume a stuck process just because a
+retrain is running past the documented estimate: check `uptime`/`ps` for
+contention before assuming something is broken, and prefer blocking on the
+actual process exiting (e.g. `until ! kill -0 <pid>; do sleep 5; done`)
+over a fixed-duration wait when retraining on a machine that might be
+shared.
+
+---
+
 <!-- New entries go above this line. Append, don't rewrite history. -->

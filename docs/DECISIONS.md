@@ -188,4 +188,49 @@ jumps, confirming the latent space is continuous and well-structured
 
 ---
 
+## 2026-11-20 — Step 10 evaluation: full-test-set MSE + SSIM, VAE's stochastic forward used as-is
+
+**Options considered:** Report training-loss numbers only vs. adding a
+dedicated held-out evaluation; evaluate on a sample of the test set (as the
+PCA/t-SNE analysis does, with 3,000 points) vs. the full 10,000 test images;
+reconstruct the VAE's test images via its stochastic forward pass
+(`z = mu + eps*std`) vs. a deterministic `mu`-only decode.
+
+**Why a dedicated held-out evaluation:** the training loss curves
+(`ae_loss_curve.png`, `vae_loss_curves.png`) only report in-training
+numbers, which the model has already seen. `src/evaluate.py` loads the
+trained `ae_weights.pt` / `vae_weights.pt` and computes per-image MSE and
+SSIM (`skimage.metrics.structural_similarity`, `data_range=1.0`), averaged
+over the test set, for a real generalization number.
+
+**Why the full 10k test set, not a sample:** unlike t-SNE (O(n^2), slow),
+MSE/SSIM on 28x28 images is cheap per image — evaluating all 10,000 images
+for both models together finished in well under a minute, so there was no
+reason to subsample and lose some rigor for a speed gain not actually
+needed here.
+
+**Why the VAE's stochastic forward pass, not `mu`-only:** kept consistent
+with how the VAE is used everywhere else in this repo — training, and
+`train_vae.py`'s own `plot_ae_vs_vae_reconstructions` — both of which call
+`model(images)` directly rather than decoding `mu` alone. This is a
+deliberate choice to evaluate the model as it's actually used elsewhere,
+not an oversight; a `mu`-only decode would likely score slightly better on
+both metrics since it removes one source of reconstruction noise.
+
+**Dependency note:** `scikit-image` (for `structural_similarity`) was
+installed for this step via `python3 -m pip install scikit-image` but
+intentionally left out of `requirements.txt`, to avoid touching a shared
+file while another workstream may also be editing this repo. Anyone
+re-running `src/evaluate.py` needs to install it separately.
+
+**Result:** on the full 10,000-image Fashion-MNIST test set — AE: MSE
+0.00892, SSIM 0.7828; VAE: MSE 0.02251, SSIM 0.5808. The VAE's held-out
+numbers track its own training-time reconstruction loss closely (its final
+per-pixel training recon loss was already ~2.5x the AE's final training
+MSE), confirming the gap is a real, consistent effect of the KL-regularized
+latent space rather than a held-out-evaluation artifact. Full interpretation
+in `docs/REPORT.md`; raw numbers in `outputs/eval_metrics.csv`.
+
+---
+
 <!-- New entries go above this line. Append, don't rewrite history. -->
