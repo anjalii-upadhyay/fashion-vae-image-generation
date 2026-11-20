@@ -233,4 +233,33 @@ in `docs/REPORT.md`; raw numbers in `outputs/eval_metrics.csv`.
 
 ---
 
+## 2026-11-20 — Conditional VAE (Step 9 stretch goal): label-conditioning, demo classes
+
+**Architecture:** Same conv backbone as the plain VAE, but both encoder and
+decoder are conditioned on the one-hot class label (10-dim) — concatenated
+to the flattened conv features before `fc_mu`/`fc_logvar` in the encoder,
+and to `z` before the decoder's first linear layer. Same `latent_dim=32`.
+
+**Why this conditioning scheme (concat, not a learned embedding):**
+Simplest standard CVAE approach; with only 10 classes a learned embedding
+layer would add parameters without a clear benefit over a one-hot vector.
+
+**Demo classes:** Sneaker, Shirt, Bag, Trouser — chosen to mirror the
+brief's own example ("generate new sneakers vs new shirts on demand") plus
+two more visually distinct categories, rather than showing all 10 (which
+would make the figure harder to read).
+
+**Result:** ELBO 45.7 -> 22.9 over 15 epochs; KL stabilized around 6.0
+(lower than the plain VAE's ~8.5 — expected, since the class label now
+carries information the latent space previously had to encode unsupervised,
+leaving `z` to capture more of the within-class style variation instead of
+between-class identity). `outputs/cvae_class_conditioned_samples.png`
+shows 6 samples per row for each demo class, and every row is consistently
+and correctly that category — directly demonstrating the on-demand,
+category-specific generation the digital-design use case (brief's use case
+#2) asks for, beyond the unconditional VAE's "generate something plausible"
+from Step 8.
+
+---
+
 <!-- New entries go above this line. Append, don't rewrite history. -->
