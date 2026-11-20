@@ -125,4 +125,41 @@ moving to the VAE.
 
 ---
 
+## 2026-11-20 — VAE architecture, loss formulation, and training
+
+**Architecture:** Same conv encoder/decoder backbone as the AE (so the
+comparison is fair), but the encoder now outputs `mu` and `logvar` instead
+of a single vector, with the reparameterization trick
+`z = mu + eps * std` making sampling differentiable. Same `latent_dim=32`
+as the AE for direct comparability.
+
+**Loss formulation:** `reconstruction (MSE, sum reduction) + KL divergence
+to N(0, I)`, both divided by batch size (standard ELBO form, beta=1 — no
+beta-VAE weighting for this baseline). Sum reduction (not mean) is
+necessary so the reconstruction term and KL term are on comparable scales;
+mean reduction would make KL dominate and collapse the latent space.
+
+**Why MSE again (not BCE):** Consistency with the AE's loss choice (see
+earlier entry) — MSE corresponds to a Gaussian decoder assumption, which is
+simpler to reason about than treating pixel intensities as Bernoulli
+probabilities (BCE's implicit assumption).
+
+**Epochs:** Trained for 15 (vs. the AE's 10) since the VAE optimizes a
+harder joint objective (reconstruction + KL) and benefits from a bit more
+time to balance the two terms.
+
+**Result:** Total ELBO loss: 48.4 -> 25.7 over 15 epochs, with both the
+reconstruction and KL terms decreasing smoothly (no collapse — KL settled
+around 8.5, not 0, meaning the latent space is actually being used, not
+ignored). See `outputs/vae_loss_curves.png`.
+
+**AE vs VAE comparison** (`outputs/ae_vs_vae_reconstructions.png`): VAE
+reconstructions are visibly slightly blurrier than the AE's (e.g. the "Lee"
+logo text and plaid shirt pattern lose detail) — this is the expected
+trade-off for a smooth, continuous, samplable latent space instead of pure
+reconstruction fidelity, and is exactly what makes sampling new designs
+from the VAE's prior work in the next step.
+
+---
+
 <!-- New entries go above this line. Append, don't rewrite history. -->
