@@ -162,4 +162,30 @@ from the VAE's prior work in the next step.
 
 ---
 
+## 2026-11-20 — Generation: prior sampling + linear interpolation in mu-space
+
+**Random sampling:** `z ~ N(0, I)` fed directly to the decoder (no encoder
+involved) — this is the actual "generate a new design never seen in
+training" capability the business brief asks for. Implemented as
+`VAE.sample()` on the model itself since it only needs the decoder + the
+known prior shape.
+
+**Interpolation:** Linear interpolation between the `mu` (not a sampled
+`z`) of two *different-class* test images, decoded at each step. Using
+`mu` instead of a noisy sample gives a cleaner, more deterministic
+interpolation path for the figure. Picking two different classes (rather
+than two random images, which might land in the same class) makes the
+transition visually informative.
+
+**Result:** `outputs/vae_generated_samples.png` — 16 freshly sampled
+designs; several are clearly recognizable garment types (shoes, trousers,
+sweaters, boots) with some blobbier/ambiguous ones, which is expected for a
+simple (non-conditional) VAE at 15 epochs on 28x28 grayscale.
+`outputs/vae_latent_interpolation.png` — a 10-step interpolation from an
+ankle boot to a pullover shows a smooth, gradual morph with no jarring
+jumps, confirming the latent space is continuous and well-structured
+(exactly what a plain AE's latent space would not reliably give us).
+
+---
+
 <!-- New entries go above this line. Append, don't rewrite history. -->
