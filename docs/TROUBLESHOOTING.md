@@ -75,4 +75,57 @@ slightly (4 → 4.5). Verified visually — labels no longer overlap.
 
 ---
 
+## 2026-11-20 — `pip3 install` landed in the wrong Python's site-packages
+
+**Symptom:** After a fresh environment reset, `pip3 install torch
+torchvision matplotlib scikit-learn ...` reported success, but
+`python3 train_autoencoder.py` failed with `ModuleNotFoundError: No module
+named 'matplotlib'`.
+
+**Root cause:** The environment had two Python installs — `python3` resolved
+to 3.11, but `pip3` resolved to a separate Python 3.13's pip
+(`pip 24.0 ... (python 3.13)`), so packages were installed into 3.13's
+site-packages while the interpreter actually running the scripts was 3.11.
+
+**Fix:** Reinstalled using `python3 -m pip install ...` instead of bare
+`pip3`, which guarantees packages land in the site-packages of whichever
+interpreter will import them.
+
+---
+
+## 2026-11-20 — matplotlib import failed on a broken system Pillow
+
+**Symptom:** Even after fixing the pip/python mismatch above, importing
+matplotlib raised `ImportError: cannot import name '_imaging' from 'PIL'`.
+
+**Root cause:** A pre-existing Pillow install at the OS-level
+`/usr/lib/python3/dist-packages` (visible to `python3 -m pip show Pillow`,
+so pip considered the dependency "already satisfied") was missing its
+compiled `_imaging` extension — likely built for a different Python ABI —
+and that broken copy shadowed/conflicted with a working one.
+
+**Fix:** `python3 -m pip install --force-reinstall --no-deps Pillow` to put
+a matching, complete Pillow build in the interpreter's own site-packages.
+Verified with `python3 -c "from PIL import Image; import
+matplotlib.pyplot"`.
+
+---
+
+## 2026-11-20 — Session's local clone vanished between sessions
+
+**Symptom:** Returning to the project in a new session, `/home/user/fashion-vae-image-generation`
+no longer existed on disk (only `/home/user/daa` was present), even though
+`add_repo` reported the repo as "already attached".
+
+**Root cause:** Each session runs in an ephemeral container; local files
+(including git clones and installed pip packages) do not persist across
+sessions — only what's pushed to GitHub survives.
+
+**Fix:** Re-ran `git clone` for the repo and reinstalled dependencies.
+No work was lost since every completed step had already been committed and
+pushed. Lesson: never treat the local clone or installed packages as
+durable storage — only the pushed commits are.
+
+---
+
 <!-- New entries go above this line. Append, don't rewrite history. -->

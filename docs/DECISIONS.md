@@ -101,4 +101,28 @@ sampling.
 
 ---
 
+## 2026-11-20 — Latent space analysis: both PCA and t-SNE, 3000 test samples
+
+**Options considered:** PCA only, t-SNE only, or both.
+
+**Why both:** PCA is linear and fast, giving an honest (if coarser) view of
+global structure; t-SNE is non-linear and better at revealing local cluster
+structure but can distort global distances. Showing both avoids
+over-trusting either one's artifacts, and is cheap to generate.
+
+**Why 3000 samples (not the full 10k test set):** t-SNE is O(n^2)-ish and
+slow beyond a few thousand points; 3000 is enough to see clear clustering
+while keeping the plot fast to generate and readable (no overplotting).
+
+**Result:** Both projections show real structure — Trousers, Bags, and the
+footwear group (Sneaker/Sandal/Ankle boot) form clearly separated clusters
+in both PCA and t-SNE. Upper-body garments (Pullover, Coat, Shirt, T-shirt)
+overlap heavily, which matches how visually similar those classes are at
+28x28 resolution rather than indicating an encoder problem. This confirms
+the AE's 32-dim latent space captures meaningful visual characteristics,
+validating it as the representation-learning half of the brief before
+moving to the VAE.
+
+---
+
 <!-- New entries go above this line. Append, don't rewrite history. -->
